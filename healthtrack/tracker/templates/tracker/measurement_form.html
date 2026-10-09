@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Новое измерение — HealthTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card auth-card">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-plus-circle me-2" style="color: var(--accent-2);"></i>
+                <span>Новое измерение</span>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-clock me-1"></i> {{ form.measured_at.label }}
+                        </label>
+                        {{ form.measured_at }}
+                        {% for err in form.measured_at.errors %}
+                            <div class="text-danger small mt-1">{{ err }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="form-label">
+                                <i class="bi bi-arrow-up-circle text-danger me-1"></i> {{ form.systolic.label }}
+                            </label>
+                            {{ form.systolic }}
+                            {% for err in form.systolic.errors %}
+                                <div class="text-danger small mt-1">{{ err }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">
+                                <i class="bi bi-arrow-down-circle text-primary me-1"></i> {{ form.diastolic.label }}
+                            </label>
+                            {{ form.diastolic }}
+                            {% for err in form.diastolic.errors %}
+                                <div class="text-danger small mt-1">{{ err }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">
+                                <i class="bi bi-heart-pulse text-success me-1"></i> {{ form.pulse.label }}
+                            </label>
+                            {{ form.pulse }}
+                            {% for err in form.pulse.errors %}
+                                <div class="text-danger small mt-1">{{ err }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-pencil me-1"></i> {{ form.note.label }}
+                        </label>
+                        {{ form.note }}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary flex-grow-1 py-2">
+                            <i class="bi bi-check2-circle me-1"></i> Сохранить
+                        </button>
+                        <a href="{% url 'measurement_list' %}" class="btn btn-outline-secondary py-2 px-4">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

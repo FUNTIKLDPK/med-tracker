@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Вход — HealthTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 col-lg-4">
+        <div class="card auth-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div style="font-size: 3rem; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 0 30px var(--accent-glow));">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <h3 class="auth-title mt-3 mb-1">С возвращением</h3>
+                    <p class="text-muted small mb-0">Войдите, чтобы продолжить отслеживание</p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Неверный логин или пароль
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Логин</label>
+                        <input type="text" name="username" class="form-control" required autofocus
+                               placeholder="Введите логин">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Пароль</label>
+                        <input type="password" name="password" class="form-control" required
+                               placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-primary w-100 mb-3 py-2">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Войти
+                    </button>
+
+                    <div class="text-center small text-muted">
+                        Нет аккаунта? <a href="{% url 'signup' %}" class="fw-semibold">Создать</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

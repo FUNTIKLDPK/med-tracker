@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}Мои измерения — HealthTrack{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-clipboard2-pulse me-2" style="color: var(--accent);"></i> Мои измерения
+        </h2>
+        <p class="text-muted small mb-0">История вашего давления и пульса</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'export_csv' %}?date_from={{ date_from }}&date_to={{ date_to }}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+        <a href="{% url 'measurement_add' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Добавить
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-6 col-md-3">
+                <label class="form-label">С даты</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label">По дату</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-3">
+                <button class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-funnel me-1"></i> Применить
+                </button>
+            </div>
+            <div class="col-12 col-md-3">
+                <a href="{% url 'measurement_list' %}" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-label">
+                <i class="bi bi-list-ul me-1"></i> Всего
+            </div>
+            <div class="stat-value">{{ total }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-label">
+                <i class="bi bi-exclamation-triangle me-1"></i> Повышено
+            </div>
+            <div class="stat-value danger">{{ high_count }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center">
+        <i class="bi bi-graph-up-arrow me-2" style="color: var(--accent-2);"></i>
+        <span>Динамика показателей</span>
+    </div>
+    <div class="card-body">
+        {% if chart_data.labels %}
+            <div class="chart-wrapper">
+                <canvas id="chart"></canvas>
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-graph-up" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="mt-3 mb-0">Нет данных для отображения</p>
+                <a href="{% url 'measurement_add' %}" class="btn btn-primary btn-sm mt-3">
+                    <i class="bi bi-plus-lg me-1"></i> Добавить измерение
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center">
+        <i class="bi bi-table me-2" style="color: var(--accent);"></i>
+        <span>История</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th class="text-end">Верх.</th>
+                    <th class="text-end">Ниж.</th>
+                    <th class="text-end">Пульс</th>
+                    <th>Статус</th>
+                    <th class="d-none d-md-table-cell">Заметка</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in measurements %}
+                <tr {% if m.is_high %}class="row-high"{% endif %}>
+                    <td>
+                        <div class="fw-semibold">{{ m.measured_at|date:"d.m.Y" }}</div>
+                        <div class="text-muted small">{{ m.measured_at|date:"H:i" }}</div>
+                    </td>
+                    <td class="text-end fw-semibold {% if m.systolic > 140 %}text-danger{% endif %}">
+                        {{ m.systolic }}
+                    </td>
+                    <td class="text-end fw-semibold {% if m.diastolic > 90 %}text-danger{% endif %}">
+                        {{ m.diastolic }}
+                    </td>
+                    <td class="text-end">{{ m.pulse }}</td>
+                    <td>
+                        <span class="badge bg-{{ m.status_color }}">{{ m.status_label }}</span>
+                    </td>
+                    <td class="text-muted small d-none d-md-table-cell">{{ m.note|truncatechars:50|default:"—" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'measurement_delete' m.pk %}"
+                           class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                    <p class="mt-3 mb-2">Измерений пока нет</p>
+                    <a href="{% url 'measurement_add' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i> Добавить первое
+                    </a>
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+{% if chart_data.labels %}
+{{ chart_data|json_script:"chart-data" }}
+<script>
+    const data = JSON.parse(document.getElementById('chart-data').textContent);
+
+    Chart.defaults.color = '#8892ab';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 12;
+
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    function makeGradient(color) {
+        const g = ctx.createLinearGradient(0, 0, 0, 340);
+        g.addColorStop(0, color.replace('1)', '0.35)'));
+        g.addColorStop(1, color.replace('1)', '0)'));
+        return g;
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Верхнее (сист.)',
+                    data: data.systolic,
+                    borderColor: '#ff4d6d',
+                    backgroundColor: makeGradient('rgba(255, 77, 109, 1)'),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#ff4d6d',
+                    pointBorderColor: '#0a0e1a',
+                    pointBorderWidth: 2,
+                    borderWidth: 2.5,
+                },
+                {
+                    label: 'Нижнее (диаст.)',
+                    data: data.diastolic,
+                    borderColor: '#6d5dfc',
+                    backgroundColor: makeGradient('rgba(109, 93, 252, 1)'),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#6d5dfc',
+                    pointBorderColor: '#0a0e1a',
+                    pointBorderWidth: 2,
+                    borderWidth: 2.5,
+                },
+                {
+                    label: 'Пульс',
+                    data: data.pulse,
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#00d4ff',
+                    pointBorderColor: '#0a0e1a',
+                    pointBorderWidth: 2,
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    yAxisID: 'y1',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 18,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { size: 12, weight: '500' },
+                    },
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 20, 36, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 12,
+                    titleColor: '#e8ecf5',
+                    bodyColor: '#e8ecf5',
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    displayColors: true,
+                    boxPadding: 6,
+                },
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                    ticks: { color: '#8892ab', maxRotation: 0, autoSkipPadding: 20 },
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                    ticks: { color: '#8892ab' },
+                    title: {
+                        display: true,
+                        text: 'Давление (мм рт. ст.)',
+                        color: '#8892ab',
+                        font: { size: 11, weight: '600' },
+                    },
+                    suggestedMin: 40, suggestedMax: 180,
+                },
+                y1: {
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#8892ab' },
+                    title: {
+                        display: true,
+                        text: 'Пульс (уд/мин)',
+                        color: '#8892ab',
+                        font: { size: 11, weight: '600' },
+                    },
+                    suggestedMin: 40, suggestedMax: 120,
+                },
+            },
+        },
+    });
+</script>
+{% endif %}
+{% endblock %}
